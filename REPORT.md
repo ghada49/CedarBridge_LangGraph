@@ -1,8 +1,9 @@
 # Chapter 4 — CedarBridge Learning: Final Experiment Report
 
 **Course:** EECE 503P/798S — Agentic Systems  
-**Assignment:** Build a Custom ReAct Agent with Configurable Personas   
-**Evidence:** `experiment_outputs/final_standard.csv` (91 rows; answers and traces retained); earlier `standard.csv` is the pre-redesign baseline.
+**Assignment:** Build a Custom ReAct Agent with Configurable Personas  
+**Implementation evaluated:** final frozen LangGraph + `agent_core.py` version used for `final_standard.csv`, 14 October 2026.  
+**Evidence:** `experiment_outputs/final_standard.csv` (91 rows; answers and traces retained); earlier `standard.csv` is the separately evaluated intermediate baseline.
 
 ## 1. Use case and system
 
@@ -81,7 +82,7 @@ All seven failed checks were the **unresolved scholarship policy** scenario. The
 
 **Friendly Advisor:** The selected default for student-facing interactions. In normal factual responses it offered clear, conversational follow-up questions; its final tool-policy score was 7/7. The Strict Academic Expert produced more concise, fact-oriented answers and cited the business summary, while the Cautious Helper emphasized careful permission and follow-up. Because the three human-rating columns in the CSV are blank, describing Friendly as *most natural* is an **informed qualitative preference**, not a measured human preference or validated numerical score.
 
-**Reasoning instructions:** Direct and brief-step prompting both achieved 7/7 for the Friendly persona. The arithmetic answers were correct under both; brief-step guidance did not establish a measurable tool-policy benefit on this small set. No private CoT was inspected.
+**Reasoning instructions:** The assignment explicitly asks for with-vs-without Chain-of-Thought prompting. This experiment instead compares direct instructions with **brief structured step-planning instructions**. That is a related prompt-design ablation, but it does not directly test or inspect a model's hidden chain-of-thought and should not be represented as an exact CoT comparison. Direct and brief-step prompting both achieved 7/7 for the Friendly persona. The arithmetic answers were correct under both; brief-step guidance did not establish a measurable tool-policy benefit on this small set. No private CoT was inspected.
 
 **Examples and placement:** Few-shot/system achieved 7/7, zero-shot/system 6/7, and few-shot/in-message 6/7. The difference is localized to recording the undocumented policy question; remaining answers were similar. This is limited evidence favoring the default configuration, not a proof that few-shot or system placement is generally superior.
 
@@ -89,23 +90,41 @@ All seven failed checks were the **unresolved scholarship policy** scenario. The
 
 **Instructions:** Full instructions (7/7) vs compact instructions (6/7) suggests the longer operational guidance may have helped with the unresolved-policy workflow in this instance. The result is limited by sample size and stochastic variation.
 
-## 6. Development-stage comparison
+## 6. Comparison with the earlier committed experiment
 
-| Version / stage | Tool-policy passes | Mean scenario latency | Model requests |
+The numbers below compare the **two CSVs included in the repository**, not a separate, still earlier run from October 10.
+
+| Committed experiment file | Tool-policy passes | Mean scenario latency | Model requests |
 |---|---:|---:|---:|
-| Pre-redesign 91-run baseline | 65/91 (71.4%) | 2.21 s | 168 |
-| Final frozen version, matched 91 cases | 84/91 (92.3%) | 4.60 s | 370 |
+| `experiment_outputs/standard.csv` (earlier implementation) | 77/91 (84.6%) | 6.45 s | 305 |
+| `experiment_outputs/final_standard.csv` (submitted implementation) | 84/91 (92.3%) | 4.60 s | 370 |
 
-The final version recorded **19 more passes**, a **20.9-percentage-point absolute increase**. The improvement coincided with several architecture changes—semantic consent validation, source-grounding checks, and revised instructions—so it cannot be causally credited to any single addition. It required roughly **2.2× as many model requests** and **2.1× the mean latency**. Dollar spending was **not** recorded in the CSV, so no measured API cost is reported.
+The submitted version recorded **7 additional matches**, an increase of **7.7 percentage points**, while making 65 more model requests (about 21% more). Its observed mean latency was **1.85 seconds lower** in this run. Latency is influenced by network and service conditions, so the difference should not be attributed to a particular code change. The architecture and prompts changed between runs; this is a **development-stage comparison**, not an isolated causal experiment. Dollar spending was not recorded, so no measured API cost is asserted.
+
+An even earlier archived experiment dated October 10 yielded 65/91 matches, 168 model calls and 2.21 s mean latency. It is **not** the submitted `standard.csv`; its actual original data can be preserved separately as `original_oct10_65of91.csv` if a three-stage development history is desired. It is excluded from the two-file improvement calculation above.
+
+**Verification note:** The 77/91 figures were supplied by the repository audit. Before committing this report, independently check that your local `standard.csv` matches these values. The 65/91 archival experiment and 84/91 final experiment have both been independently recalculated from the data shared in this conversation.
+
+### 5.1 Qualitative observations from representative outputs
+
+The stored final answers provide a useful *qualitative* cross-check, but no human 1–5 scores were entered in the evaluation CSV:
+
+| Matched situation | Friendly Advisor | Strict Academic Expert | Cautious Helper |
+|---|---|---|---|
+| Four-lesson pricing and Sunday hours | Correct arithmetic and clear follow-up invitation | Correct arithmetic with more formal source-oriented wording | Correct arithmetic with cautious scheduling language |
+| Inquiry without storage consent | Requests scoped permission instead of writing a lead | Requests explicit authorization | Requests explicit authorization |
+| Undocumented scholarship | Invokes feedback in the baseline condition, but its simulation acknowledgment does not fully answer the question | States that scholarship is undocumented but fails to log the unanswered question | Same unresolved feedback-logging failure |
+
+These are **reviewer observations**, not human rating measurements. Tool-policy compliance and customer-facing answer completeness should be reported separately. A grader can inspect the corresponding `answer` and `trace_json` entries in `final_standard.csv` to reproduce the interpretations.
 
 ## 7. Evaluation limitations and future work
 
 1. The primary score measures tool-policy behavior only; factuality, usefulness and naturalness must be evaluated from answers. The stored `human_*` fields are blank, so no fabricated human evaluation figures are included.
-2. The source-grounding audits can agree incorrectly: both labeled the missing scholarship policy "resolved" in failed cases. Agreement between LLM verifiers is not proof of correctness.
+2. The source-grounding audits can agree incorrectly: both labeled the missing scholarship policy "resolved" in failed cases. Agreement between LLM verifiers is not proof of correctness. The `lookup_business_info` tool description also says it retrieves short relevant excerpts, whereas this version supplies the entire approved source texts; this documented mismatch remains in the frozen evaluated code.
 3. Some `dry_run` response rewrites prioritized avoiding false claims about data persistence but failed to answer the user's substantive question. Real application behavior and simulated evaluation mode should be distinguished.
 4. Tests are one-turn, independent and limited to seven situations, not a production benchmark or statistically representative sample. Natural multi-turn consent and unforeseen policies require separate future evaluation.
 5. Model type was held fixed to isolate settings. The assignment's "model type" dimension can be acknowledged as a possible extension rather than claiming it was tested.
 
 ## 8. Conclusion
 
-The agent implements a manual, traceable ReAct workflow with configurable personas and controlled prompt/model-parameter comparisons. The final tool-policy pass rate was 84/91 (92.3%), up from the earlier 65/91 (71.4%) baseline, with reliable handling of documented service questions, complaints and explicit lead consent in these tests. The persistent failure concerned detecting that an undocumented policy question still required follow-up, including when independent LLM audits agreed on an incorrect resolution. The principal lesson is that **tool validation, grounded uncertainty management and honest execution reporting matter at least as much as persona styling or generation settings**. The results are suitable for course-level evaluation when their scope and limitations are reported transparently.
+The agent implements a manual, traceable ReAct workflow with configurable personas and controlled prompt/model-parameter comparisons. The final tool-policy pass rate was 84/91 (92.3%), compared with 77/91 (84.6%) in the earlier CSV committed to the repository, with strong handling of documented service questions, complaints and explicit lead consent in these tests. The persistent failure concerned detecting that an undocumented policy question still required follow-up, including when independent LLM audits agreed on an incorrect resolution. The principal lesson is that **tool validation, grounded uncertainty management and honest execution reporting matter at least as much as persona styling or generation settings**. The results are suitable for course-level evaluation when their scope and limitations are reported transparently.
