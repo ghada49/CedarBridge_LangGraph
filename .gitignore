@@ -1,0 +1,28 @@
+# Python environments and generated Python files
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.pytest_cache/
+.pytest_local_temp/
+pytest_isolated_tests/
+
+# Secrets (keep template public)
+.env
+.env.*
+!.env.example
+
+# Customer/feedback runtime logs
+logs/
+
+# Development smoke outputs; preserve final and baseline 91-run CSVs
+experiment_outputs/*smoke.csv
+
+# Redundant local experiment scratch (NOT the final experiment_outputs/)
+experiment_outputs2/
+
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.vscode/

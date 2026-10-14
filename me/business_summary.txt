@@ -1,0 +1,12 @@
+CedarBridge Learning — FICTIONAL BUSINESS, FALL 2026
+Founded in 2024 and based in Lebanon, CedarBridge Learning provides online, bilingual (English and Arabic) STEM tutoring for Grades 7–12 via live Zoom sessions. Subjects: Mathematics, Physics, and beginner Python programming. Mathematics and Physics exam preparation are offered for Lebanese school programs. Chemistry, university courses, and in-person tutoring are not offered.
+
+A free 20-minute introductory consultation is available (not a tutoring lesson). Individually tailored tutor matching and written progress notes after every four completed paid sessions are part of the service. The business does not guarantee grades or examination results.
+
+Pricing (USD): Individual online lesson, 60 minutes: $25; small-group lesson, 60 minutes, 3–5 learners: $15 per student; a package of four 60-minute individual lessons: $90 total; 20-minute introductory consultation: free. No additional discount or tax policy is specified.
+
+Service hours: Monday–Saturday, 10:00–19:00 Beirut local time; closed Sunday. Session requests ideally at least 24 hours beforehand and require human confirmation. Confirmed lessons may be rescheduled without a fee with at least 24 hours' notice. Late cancellations normally forfeit the session. If CedarBridge cancels, the learner may receive a reschedule or refund for the lesson; other refunds are subject to human review.
+
+Fictional team: Lina Daher (Co-founder and Academic Director) and Karim Mansour (Co-founder and Operations Lead). Fictional email: hello@cedarbridge.example (reserved .example address; not real mail).
+
+The bot cannot book confirmed appointments, accept payments, or issue refunds. With explicit permission, customer name/email/tutoring needs can be stored in local logs/leads.jsonl. Unanswered questions and complaints are saved in logs/feedback.jsonl. This is a teaching demonstration; data is NOT transmitted to real staff.

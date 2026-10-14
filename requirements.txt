@@ -1,0 +1,7 @@
+langgraph>=1.0,<2
+openai>=1.50,<3
+pypdf>=5,<7
+python-dotenv>=1,<2
+gradio>=5,<7
+pytest>=8,<10
+nbformat>=5,<6
