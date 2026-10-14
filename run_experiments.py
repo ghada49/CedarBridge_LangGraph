@@ -89,7 +89,7 @@ SCENARIOS = [
     },
 ]
 
-# Stable IDs are important: analyze_experiments.py uses IDs 0–12.
+# Stable condition IDs keep experiment CSV rows aligned with the report.
 # Conditions 1 and 2 differ from 0 in persona text AND persona defaults.
 # For every remaining comparison, only one setting changes versus condition 0.
 STANDARD_CONDITIONS = [
@@ -340,7 +340,7 @@ def main() -> None:
           f"{matched_now} tool-policy matches; {errors_now} API/runtime errors.")
     print(f"Saved: {output}")
     print("Human factuality, helpfulness and naturalness ratings are intentionally BLANK.")
-    print("After rating answers, run: python analyze_experiments.py --input", output)
+    print("Human ratings can be entered in the CSV for later manual comparison.")
 
 
 if __name__ == "__main__":

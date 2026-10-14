@@ -101,11 +101,7 @@ The numbers below compare the **two CSVs included in the repository**, not a sep
 
 The submitted version recorded **7 additional matches**, an increase of **7.7 percentage points**, while making 65 more model requests (about 21% more). Its observed mean latency was **1.85 seconds lower** in this run. Latency is influenced by network and service conditions, so the difference should not be attributed to a particular code change. The architecture and prompts changed between runs; this is a **development-stage comparison**, not an isolated causal experiment. Dollar spending was not recorded, so no measured API cost is asserted.
 
-An even earlier archived experiment dated October 10 yielded 65/91 matches, 168 model calls and 2.21 s mean latency. It is **not** the submitted `standard.csv`; its actual original data can be preserved separately as `original_oct10_65of91.csv` if a three-stage development history is desired. It is excluded from the two-file improvement calculation above.
-
-**Verification note:** The 77/91 figures were supplied by the repository audit. Before committing this report, independently check that your local `standard.csv` matches these values. The 65/91 archival experiment and 84/91 final experiment have both been independently recalculated from the data shared in this conversation.
-
-### 5.1 Qualitative observations from representative outputs
+### 6.1 Qualitative observations from representative outputs
 
 The stored final answers provide a useful *qualitative* cross-check, but no human 1–5 scores were entered in the evaluation CSV:
 

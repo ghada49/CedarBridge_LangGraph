@@ -44,11 +44,11 @@ Execute it from this project folder. The notebook imports `agent_core.py`, so ke
 The prompt and tool descriptions are in `INSTRUCTIONS`, `WORKED_EXAMPLE`, and `TOOL_SCHEMAS`. `max_model_calls` and `max_tool_calls` bound loops. The code deliberately avoids `AgentExecutor`, `ToolNode`, and prebuilt ReAct agents.
 
 ### Tools
-- `lookup_business_info(question)`: read-only local keyword lookup over the approved PDF and TXT.
+- `lookup_business_info(question)`: read-only access to the approved PDF and TXT contents for semantic interpretation.
 - `record_customer_interest(email, name, message)`: locally saves a lead, but **only** if the customer's messages contain name, email, tutoring needs, and clear consent. `dry_run=True` validates without writing.
 - `record_feedback(question)`: locally records a complaint/unanswered business question; does not email any actual staff.
 
-The deterministic protection layer rejects fabricated name/email, malformed email, missing consent, invalid tool arguments, and unknown tools. These are deliberately enforced in code rather than entrusted solely to an LLM instruction.
+The tool layer validates inputs and rejects unknown tools. Saving a lead also requires customer-provided details, a valid email, and a consent verdict; the code blocks storage whenever those checks fail.
 
 ## Personas and experimental configurations
 | Persona | Role | Temperature | Top-p | Frequency penalty | Presence penalty | Max output tokens |
@@ -65,7 +65,7 @@ All three use exactly the same business facts and tools. Configuration defaults 
 - Placement: persona/task instructions in `system` vs. wrapped within the current `user` turn (`in_message`). The core privacy rules and approved business knowledge remain system-level across both conditions; thus this isolates persona/task placement, not removal of safety rules.
 - Model configuration: temperature, top_p, frequency_penalty, presence_penalty, max_completion_tokens and optionally model type. A dedicated `instructions_mode=compact` ablation isolates the detailed instruction block, while core safety protections remain enforced. **Top-k is not exposed by the OpenAI Chat Completions endpoint in use, and is recorded as unsupported rather than silently faked.**
 
-OpenAI recommends normally adjusting **temperature OR top-p**, not both simultaneously. The experiment at `temperature=1.0, top_p=0.65` holds temperature at its neutral setting.
+The top-p experiment changes `top_p` from 1.0 to 0.65 while holding the Friendly Advisor's temperature at 0.6, so only top-p differs from the baseline. Both sampling controls remain non-neutral.
 
 ### Running matched experiments
 **Low-cost check** (3 persona conditions × 3 matched questions = 9 scenarios, may involve more than one model call each):
