@@ -60,12 +60,40 @@ The tool layer validates inputs and rejects unknown tools. Saving a lead also re
 All three use exactly the same business facts and tools. Configuration defaults are justified hypotheses, **not** empirical findings. The actual model may produce different behavior.
 
 ### Experimental dimensions
-- Prompt: `direct` vs. `brief_steps` (the latter asks for a concise, user-visible action rationale; it is **not** disclosure of private model reasoning).
+- Prompt placement and style (91-run study): `direct` vs. `brief_steps`; the latter requests a short action plan, not hidden model reasoning.
+- Separate CoT-style ablation (14-run study): `run_cot_ablation.py` compares the unchanged direct prompt with the same prompt plus an explicit four-step verification checklist. It requests only a brief, user-visible `Decision basis:` when useful; it does not expose private chain-of-thought.
 - Demonstration: `zero_shot` vs. `few_shot`. `WORKED_EXAMPLE` is included in the normal instructions and removed **only** for the explicit zero-shot ablation.
 - Placement: persona/task instructions in `system` vs. wrapped within the current `user` turn (`in_message`). The core privacy rules and approved business knowledge remain system-level across both conditions; thus this isolates persona/task placement, not removal of safety rules.
 - Model configuration: temperature, top_p, frequency_penalty, presence_penalty, max_completion_tokens and optionally model type. A dedicated `instructions_mode=compact` ablation isolates the detailed instruction block, while core safety protections remain enforced. **Top-k is not exposed by the OpenAI Chat Completions endpoint in use, and is recorded as unsupported rather than silently faked.**
 
 The top-p experiment changes `top_p` from 1.0 to 0.65 while holding the Friendly Advisor's temperature at 0.6, so only top-p differs from the baseline. Both sampling controls remain non-neutral.
+
+### Direct versus structured CoT-style evaluation
+
+The dedicated reasoning-prompt ablation uses the same seven questions in two matched conditions, with **Friendly Advisor**, `gpt-4.1-mini`, the same sampling settings, tools, business sources, few-shot example, and system-message placement. Only the extra structured reasoning instruction changes. All customer-data writes are simulated.
+
+| Recorded metric | Direct | Structured CoT-style |
+|---|---:|---:|
+| Tool-policy checks passed | **7/7** | **7/7** |
+| Mean latency | 7.66 s | 4.74 s |
+| Median latency | 4.43 s | 4.42 s |
+| Mean model calls per scenario | 4.14 | 4.14 |
+| Mean tool calls per scenario | 1.00 | 1.00 |
+| Responses containing `Decision basis:` | 0/7 | 2/7 |
+| Errors | 0 | 0 |
+
+Both conditions made the expected tool decisions in all seven scenarios. Neither established a tool-policy advantage. The structured prompt added a visible evidence summary to the pricing and unsupported-subject answers, but the application’s dry-run response handling and other reply paths sometimes omitted the requested label. One **25.95-second direct run** heavily affected its mean latency; nearly equal medians are a better indication of the observed typical latency. These results represent one run per condition/question, not a statistically reliable speed or accuracy comparison. The human-rating columns remain blank.
+
+The recorded `unknown_policy` responses also illustrate a qualitative difference: the direct variant returned only the simulated-feedback acknowledgment, while the structured variant explicitly said the documents do not confirm the policy before acknowledging the simulated feedback. Both called the correct tools. This is an observed example, not a general proof of improved helpfulness.
+
+Source and reproducibility: [`run_cot_ablation.py`](run_cot_ablation.py) and [`experiment_outputs/cot_ablation.csv`](experiment_outputs/cot_ablation.csv). The primary 91-case data and production agent were not changed by this ablation.
+
+View the committed results directly; a fresh run incurs model usage. To run a new comparison without overwriting the submitted evidence:
+
+```bash
+python run_cot_ablation.py --plan
+python run_cot_ablation.py --model gpt-4.1-mini --output experiment_outputs/cot_ablation_new.csv
+```
 
 ### Running matched experiments
 **Low-cost check** (3 persona conditions × 3 matched questions = 9 scenarios, may involve more than one model call each):

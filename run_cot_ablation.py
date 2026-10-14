@@ -1,6 +1,6 @@
 """C4 matched prompting ablation: direct answers versus structured (CoT-style) reasoning.
 
-Run from the CedarBridge project root after copying this script there:
+Run from the CedarBridge project root:
     python run_cot_ablation.py --plan
     python run_cot_ablation.py --model gpt-4.1-mini --output experiment_outputs/cot_ablation.csv
 

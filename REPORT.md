@@ -3,7 +3,7 @@
 **Course:** EECE 503P/798S — Agentic Systems  
 **Assignment:** Build a Custom ReAct Agent with Configurable Personas  
 **Implementation evaluated:** final frozen LangGraph + `agent_core.py` version used for `final_standard.csv`, 14 October 2026.  
-**Evidence:** `experiment_outputs/final_standard.csv` (91 rows; answers and traces retained); earlier `standard.csv` is the separately evaluated intermediate baseline.
+**Evidence:** `experiment_outputs/final_standard.csv` (91 runs), `experiment_outputs/standard.csv` (earlier 91-run implementation), and the separate matched reasoning-prompt evaluation `experiment_outputs/cot_ablation.csv` (14 runs). All results contain responses and tool traces.
 
 ## 1. Use case and system
 
@@ -18,6 +18,7 @@ The ReAct loop is manually implemented through LangGraph nodes and conditional r
 - **Prompt/config dimensions:** persona; direct vs brief-step guidance (an instruction-level reasoning comparison, **not inspection of private chain-of-thought**); zero-shot vs few-shot; system vs in-message instructions; temperature 0.2/0.9; top-p 0.65; frequency/presence penalties 0.5; max completion tokens 250; compact vs full instructions.
 - **Scenarios:** combined pricing arithmetic and Sunday restrictions, unsupported Chemistry/university subject, undocumented scholarship question, lead without consent, lead with explicit consent, customer complaint, and Arabic-language Math question.
 - **Primary measured metric:** `proxy_pass` — whether expected write tools executed exactly once, or unauthorized/unnecessary write attempts were absent. This does **not** score the truthfulness, completeness or naturalness of the response. Other recorded metrics are model calls, tool calls, latency, final answer, and ReAct/audit trace.
+- **Additional reasoning-prompt comparison:** a separate, matched 14-run experiment compares the standard direct prompt with the same prompt plus a four-step CoT-style verification instruction. It keeps the Friendly Advisor, model, generation settings, documents, tools, examples and prompt placement fixed. This experiment is reported independently in Section 7.
 - **Study boundaries:** no multiple random-seed trials; seven cases are a deliberately small set; no separate model-family comparison. The experiment compares within the specified model rather than claiming broad generalization.
 
 ## 3. Overall results
@@ -82,7 +83,7 @@ All seven failed checks were the **unresolved scholarship policy** scenario. The
 
 **Friendly Advisor:** The selected default for student-facing interactions. In normal factual responses it offered clear, conversational follow-up questions; its final tool-policy score was 7/7. The Strict Academic Expert produced more concise, fact-oriented answers and cited the business summary, while the Cautious Helper emphasized careful permission and follow-up. Because the three human-rating columns in the CSV are blank, describing Friendly as *most natural* is an **informed qualitative preference**, not a measured human preference or validated numerical score.
 
-**Reasoning instructions:** The assignment explicitly asks for with-vs-without Chain-of-Thought prompting. This experiment instead compares direct instructions with **brief structured step-planning instructions**. That is a related prompt-design ablation, but it does not directly test or inspect a model's hidden chain-of-thought and should not be represented as an exact CoT comparison. Direct and brief-step prompting both achieved 7/7 for the Friendly persona. The arithmetic answers were correct under both; brief-step guidance did not establish a measurable tool-policy benefit on this small set. No private CoT was inspected.
+**Reasoning instructions:** In the 91-run comparison, direct and `brief_steps` prompting both achieved 7/7 tool-policy checks for the Friendly persona. The `brief_steps` mode prompts a short, user-visible action plan, rather than explicitly intervening on private reasoning. A **separate controlled direct-versus-structured CoT-style ablation** (Section 7) adds an explicit evidence-verification checklist to an otherwise unchanged prompt. Neither study reveals the model's private chain-of-thought.
 
 **Examples and placement:** Few-shot/system achieved 7/7, zero-shot/system 6/7, and few-shot/in-message 6/7. The difference is localized to recording the undocumented policy question; remaining answers were similar. This is limited evidence favoring the default configuration, not a proof that few-shot or system placement is generally superior.
 
@@ -92,7 +93,7 @@ All seven failed checks were the **unresolved scholarship policy** scenario. The
 
 ## 6. Comparison with the earlier committed experiment
 
-The numbers below compare the **two CSVs included in the repository**, not a separate, still earlier run from October 10.
+The numbers below compare the **two 91-run implementation-stage CSVs**, which are separate from the 14-run reasoning-prompt ablation.
 
 | Committed experiment file | Tool-policy passes | Mean scenario latency | Model requests |
 |---|---:|---:|---:|
@@ -113,14 +114,37 @@ The stored final answers provide a useful *qualitative* cross-check, but no huma
 
 These are **reviewer observations**, not human rating measurements. Tool-policy compliance and customer-facing answer completeness should be reported separately. A grader can inspect the corresponding `answer` and `trace_json` entries in `final_standard.csv` to reproduce the interpretations.
 
-## 7. Evaluation limitations and future work
+## 7. Direct versus structured CoT-style prompting
+
+The separate evaluation in `experiment_outputs/cot_ablation.csv` contains **14 completed runs without runtime errors**: seven matched business scenarios tested once with the existing direct prompt and once with an otherwise identical prompt augmented by the checklist in `run_cot_ablation.py`. The variant order alternates by scenario. Both use the Friendly Advisor, `gpt-4.1-mini`, persona-default settings, a few-shot example and system-level placement. `agent_core.py` is unchanged, and write actions remain in `dry_run=True` mode.
+
+The added prompt asks the model to identify the real question, look for supporting sources or tool observations, check arithmetic and consent/action constraints, and choose a supported action or final answer. It requests a short optional `Decision basis:` sentence about observable evidence. **It does not expose or measure private internal chain-of-thought**; the experiment tests the behavioral effect of an explicit CoT-style reasoning instruction.
+
+| Metric | Direct | Structured CoT-style |
+|---|---:|---:|
+| Completed runs | 7/7 | 7/7 |
+| Tool-policy passes | **7/7** | **7/7** |
+| Mean latency | 7.66 s | 4.74 s |
+| Median latency | 4.43 s | 4.42 s |
+| Mean model requests per run | 4.14 | 4.14 |
+| Mean tool observations per run | 1.00 | 1.00 |
+| Answers containing `Decision basis:` | 0/7 | 2/7 |
+| Runtime/API errors | 0 | 0 |
+
+The tool-policy results were identical for all seven scenarios. Both variants performed the pricing arithmetic correctly ($100 for four separate lessons, $90 for the package, $10 saved), observed Sunday closure, withheld lead storage without consent, validated the consented lead in simulation, recorded complaints and the unanswered scholarship question in simulation, and answered the Arabic service question in Arabic.
+
+The structured variant included an explicit evidence-basis label for the pricing and unsupported-subject responses. It did not consistently produce that label elsewhere; `dry_run` response replacement is one reason the requested presentation can be absent. On the scholarship scenario, both variants called the correct logging tool; only the structured final reply explicitly said the documents did not confirm the policy before acknowledging the simulated feedback. This illustrates a potential answer-completeness gain in one case, **not** a scored helpfulness improvement.
+
+The direct condition contained a 25.95-second pricing run. It inflates the direct mean relative to the structured mean, while the medians (4.43 s vs 4.42 s) were nearly identical. Accordingly, the results **do not establish lower latency or improved tool correctness from CoT prompting**. The small single-round sample, blank human-rating fields, and fixed model limit broader conclusions.
+
+## 8. Evaluation limitations and future work
 
 1. The primary score measures tool-policy behavior only; factuality, usefulness and naturalness must be evaluated from answers. The stored `human_*` fields are blank, so no fabricated human evaluation figures are included.
 2. The source-grounding audits can agree incorrectly: both labeled the missing scholarship policy "resolved" in failed cases. Agreement between LLM verifiers is not proof of correctness. The `lookup_business_info` tool description also says it retrieves short relevant excerpts, whereas this version supplies the entire approved source texts; this documented mismatch remains in the frozen evaluated code.
 3. Some `dry_run` response rewrites prioritized avoiding false claims about data persistence but failed to answer the user's substantive question. Real application behavior and simulated evaluation mode should be distinguished.
-4. Tests are one-turn, independent and limited to seven situations, not a production benchmark or statistically representative sample. Natural multi-turn consent and unforeseen policies require separate future evaluation.
+4. Each experimental comparison uses a small set of independent one-turn scenarios, with one observation per matched question/configuration. The 14-run CoT-style prompt ablation does not measure hidden reasoning, and its latency means are sensitive to an outlier. Multi-turn consent and unforeseen policies require separate future evaluation.
 5. Model type was held fixed to isolate settings. The assignment's "model type" dimension can be acknowledged as a possible extension rather than claiming it was tested.
 
-## 8. Conclusion
+## 9. Conclusion
 
-The agent implements a manual, traceable ReAct workflow with configurable personas and controlled prompt/model-parameter comparisons. The final tool-policy pass rate was 84/91 (92.3%), compared with 77/91 (84.6%) in the earlier CSV committed to the repository, with strong handling of documented service questions, complaints and explicit lead consent in these tests. The persistent failure concerned detecting that an undocumented policy question still required follow-up, including when independent LLM audits agreed on an incorrect resolution. The principal lesson is that **tool validation, grounded uncertainty management and honest execution reporting matter at least as much as persona styling or generation settings**. The results are suitable for course-level evaluation when their scope and limitations are reported transparently.
+The agent implements a manual, traceable ReAct workflow with configurable personas and controlled prompt/model-parameter comparisons. The final tool-policy pass rate was 84/91 (92.3%), compared with 77/91 (84.6%) in the earlier implementation-stage CSV, with strong handling of documented service questions, complaints and explicit lead consent in these tests. A separate matched CoT-style prompt evaluation achieved 7/7 tool-policy checks under both direct and structured conditions, without establishing a measurable advantage in tool correctness. The persistent failure concerned detecting that an undocumented policy question still required follow-up, including when independent LLM audits agreed on an incorrect resolution. The principal lesson is that **tool validation, grounded uncertainty management and honest execution reporting matter at least as much as persona styling or generation settings**. The results are suitable for course-level evaluation when their scope and limitations are reported transparently.
