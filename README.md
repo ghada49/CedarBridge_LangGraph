@@ -82,5 +82,4 @@ python run_experiments.py --all --rounds 1
 ```
 To compare a second compatible model, pass `--model MODEL_NAME` and save to a separate `--output FILE` so you do not overwrite the first results. All experiment runs use `dry_run=True`, so they cannot create synthetic lead/feedback records. **Cost is not fixed**; each scenario can make several model requests due to ReAct loops.
 
-The experiment CSV records: scenario ID, condition, persona, mode, token configuration, number of model/tool calls, wall time, tool-use proxy score, sanitized trace, and model response. Columns for **human factuality, helpfulness and naturalness** must be completed by actually reading the outputs. Heuristic tool correctness is not a valid substitute for human evaluation or source-level factuality checks. The user should not report performance conclusions until actual live runs and manual ratings are finished.
 
